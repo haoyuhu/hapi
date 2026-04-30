@@ -10,7 +10,6 @@ import { ToolCard } from '@/components/ToolCard/ToolCard'
 import { useHappyChatContext } from '@/components/AssistantChat/context'
 import { CliOutputBlock } from '@/components/CliOutputBlock'
 import { UserBubbleContent, getUserBubbleClassName, shouldShowMessageStatus } from '@/components/AssistantChat/messages/user-bubble'
-import { cn } from '@/lib/utils'
 
 function isToolCallBlock(value: unknown): value is ToolCallBlock {
     if (!isObject(value)) return false
@@ -62,17 +61,12 @@ function HappyNestedBlockList(props: {
 
                     return (
                         <div key={`user:${block.id}`} className={getUserBubbleClassName(status)}>
-                            <div className="flex items-end gap-2">
+                            <div className="flex items-start gap-2">
                                 <div className="min-w-0 flex-1">
                                     <UserBubbleContent text={block.text} />
                                 </div>
                                 {showStatus ? (
-                                    <div
-                                        className={cn(
-                                            'shrink-0',
-                                            status !== 'failed' ? 'self-center' : 'self-end pb-0.5'
-                                        )}
-                                    >
+                                    <div className="happy-message-actions-first-line shrink-0">
                                         <MessageStatusIndicator status={status} onRetry={onRetry} />
                                     </div>
                                 ) : null}

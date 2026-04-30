@@ -72,6 +72,10 @@
     --app-badge-error-border: rgba(239, 68, 68, 0.3);
 
     --app-font-scale: 1;
+    --app-chat-font-size: 0.9375rem;
+    --app-chat-line-height: 1.75rem;
+    --app-chat-font-weight: 400;
+    --app-message-action-size: 1.125rem;
 }
 
 [data-theme="dark"] {
@@ -296,13 +300,12 @@ body {
 }
 
 /*
- * content-visibility: auto lets the browser skip layout/paint for messages
- * scrolled out of the viewport. Big win on Windows with long conversations (#310).
- * contain-intrinsic-size gives a rough height hint so scrollbar doesn't jump.
+ * Keep message layout fully realized while scrolling. `content-visibility: auto`
+ * made Chromium replace rough intrinsic heights as older messages entered view,
+ * which could change scrollTop and bounce the chat away from the user's target.
  */
 .happy-thread-messages > * {
-    content-visibility: auto;
-    contain-intrinsic-size: auto 80px;
+    overflow-anchor: none;
 }
 
 /* Markdown styles */
@@ -315,6 +318,35 @@ body {
 
 .aui-md {
     color: var(--app-fg);
+    font-size: var(--app-chat-font-size);
+    font-weight: var(--app-chat-font-weight);
+    line-height: var(--app-chat-line-height);
+}
+
+.happy-chat-text {
+    font-size: var(--app-chat-font-size);
+    font-weight: var(--app-chat-font-weight);
+    line-height: var(--app-chat-line-height);
+}
+
+
+.tool-result-quote :where(.aui-md, .aui-md-p, .aui-md-li, .aui-md-td, .aui-md-th, .aui-md-strong, .aui-md-em, .aui-md-h1, .aui-md-h2, .aui-md-h3, .aui-md-h4, .aui-md-h5, .aui-md-h6) {
+    color: inherit;
+    font-size: inherit;
+    line-height: inherit;
+}
+
+.tool-result-quote :where(.aui-md-table) {
+    font-size: inherit;
+}
+
+.tool-result-quote :where(.aui-md-a) {
+    color: var(--app-link);
+}
+
+.happy-message-actions-first-line {
+    align-self: flex-start;
+    margin-top: max(0px, calc((var(--app-chat-line-height) - var(--app-message-action-size)) / 2));
 }
 
 .aui-md :where(.contains-task-list) {

@@ -1,4 +1,5 @@
 import { diffLines } from 'diff'
+import type { CSSProperties } from 'react'
 import { useMemo } from 'react'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
 import { usePointerFocusRing } from '@/hooks/usePointerFocusRing'
@@ -45,6 +46,9 @@ export function DiffView(props: {
     newString: string
     filePath?: string
     variant?: 'preview' | 'inline'
+    size?: 'compact' | 'comfortable'
+    scrollY?: boolean
+    maxHeight?: number
 }) {
     const { t } = useTranslation()
     const variant = props.variant ?? 'preview'
@@ -71,6 +75,9 @@ export function DiffView(props: {
             additions={stats.additions}
             deletions={stats.deletions}
             showHeader
+            size={props.size}
+            scrollY={props.scrollY}
+            maxHeight={props.maxHeight}
         />
     )
 
@@ -115,6 +122,7 @@ export function DiffView(props: {
                                 additions={stats.additions}
                                 deletions={stats.deletions}
                                 showHeader={false}
+                                size={props.size}
                             />
                         </div>
                     </div>
@@ -142,8 +150,20 @@ function DiffInlineView(props: {
     additions: number
     deletions: number
     showHeader: boolean
+    size?: 'compact' | 'comfortable'
+    scrollY?: boolean
+    maxHeight?: number
 }) {
     const diff = useMemo(() => diffLines(props.oldString, props.newString), [props.oldString, props.newString])
+    const isComfortable = props.size === 'comfortable'
+    const lineNumberWidth = Math.max(
+        String(countLines(props.oldString)).length,
+        String(countLines(props.newString)).length,
+        2
+    )
+    const rowStyle = {
+        gridTemplateColumns: `${lineNumberWidth}ch ${lineNumberWidth}ch ${isComfortable ? 'max-content' : 'minmax(0, 1fr)'}`
+    } satisfies CSSProperties
 
     let oldLineNumber = 1
     let newLineNumber = 1
@@ -162,36 +182,46 @@ function DiffInlineView(props: {
                 </div>
             ) : null}
 
-            <div className="font-mono text-xs">
-                {diff.map((part, i) => {
-                    const lines = splitDiffLines(part.value)
+            <div
+                className={cn(
+                    'overflow-x-auto',
+                    props.scrollY ? 'overflow-y-auto' : 'overflow-y-hidden'
+                )}
+                style={props.scrollY ? { maxHeight: props.maxHeight ?? 420 } : undefined}
+            >
+                <div className={cn('font-mono', isComfortable ? 'w-max min-w-full text-sm leading-6' : 'text-xs')}>
+                    {diff.map((part, i) => {
+                        const lines = splitDiffLines(part.value)
 
-                    return (
-                        <div key={i}>
-                            {lines.map((line, j) => {
-                                const prefix = part.added ? '+' : part.removed ? '-' : ' '
-                                const leftNumber = part.added ? '' : String(oldLineNumber++)
-                                const rightNumber = part.removed ? '' : String(newLineNumber++)
-                                const rowClass = cn(
-                                    'grid grid-cols-[auto_auto_1fr] gap-3 px-3 py-1.5',
-                                    part.added && 'bg-[var(--app-diff-added-bg)] text-[var(--app-diff-added-text)]',
-                                    part.removed && 'bg-[var(--app-diff-removed-bg)] text-[var(--app-diff-removed-text)]'
-                                )
+                        return (
+                            <div key={i}>
+                                {lines.map((line, j) => {
+                                    const prefix = part.added ? '+' : part.removed ? '-' : ' '
+                                    const leftNumber = part.added ? '' : String(oldLineNumber++)
+                                    const rightNumber = part.removed ? '' : String(newLineNumber++)
+                                    const rowClass = cn(
+                                        'grid min-w-full gap-3',
+                                        isComfortable ? 'px-4' : 'px-3',
+                                        isComfortable ? 'py-0' : 'py-1.5',
+                                        part.added && 'bg-[var(--app-diff-added-bg)] text-[var(--app-diff-added-text)]',
+                                        part.removed && 'bg-[var(--app-diff-removed-bg)] text-[var(--app-diff-removed-text)]'
+                                    )
 
-                                return (
-                                    <div key={j} className={rowClass}>
-                                        <div className="min-w-[2ch] text-right text-[10px] text-[var(--app-hint)]/80">{leftNumber}</div>
-                                        <div className="min-w-[2ch] text-right text-[10px] text-[var(--app-hint)]/80">{rightNumber}</div>
-                                        <div className="min-w-0 whitespace-pre-wrap break-words">
-                                            <span className="mr-2 inline-block w-3 text-[var(--app-hint)]/90">{prefix}</span>
-                                            <span>{line}</span>
+                                    return (
+                                        <div key={j} className={rowClass} style={rowStyle}>
+                                            <div className={cn('text-left text-[var(--app-hint)]/80', isComfortable ? 'text-xs leading-6' : 'text-[10px]')}>{leftNumber}</div>
+                                            <div className={cn('text-left text-[var(--app-hint)]/80', isComfortable ? 'text-xs leading-6' : 'text-[10px]')}>{rightNumber}</div>
+                                            <div className={cn(isComfortable ? 'whitespace-pre' : 'min-w-0 whitespace-pre-wrap break-words')}>
+                                                <span className="mr-2 inline-block w-3 text-[var(--app-hint)]/90">{prefix}</span>
+                                                <span>{line}</span>
+                                            </div>
                                         </div>
-                                    </div>
-                                )
-                            })}
-                        </div>
-                    )
-                })}
+                                    )
+                                })}
+                            </div>
+                        )
+                    })}
+                </div>
             </div>
         </div>
     )

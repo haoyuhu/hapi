@@ -11,7 +11,6 @@ import { useCopyToClipboard } from '@/hooks/useCopyToClipboard'
 import { getConversationMessageAnchorId } from '@/chat/outline'
 import { MessageMetadata } from '@/components/AssistantChat/messages/MessageMetadata'
 import { isNestedInteractiveEvent } from '@/components/AssistantChat/messages/metadataToggle'
-import { cn } from '@/lib/utils'
 
 export function HappyUserMessage() {
     const ctx = useHappyChatContext()
@@ -110,18 +109,13 @@ export function HappyUserMessage() {
             aria-expanded={hasMetadata ? showMetadata : undefined}
         >
             <div className="flex flex-col gap-1">
-                <div className="flex items-end gap-2">
+                <div className="flex items-start gap-2">
                     <div className="min-w-0 flex-1">
                         {hasText ? <UserBubbleContent text={text} /> : null}
                         {hasAttachments ? <MessageAttachments attachments={attachments} /> : null}
                     </div>
                     {(hasText || showStatus) && (
-                        <div
-                            className={cn(
-                                'flex shrink-0 items-center gap-1',
-                                showStatus && status !== 'failed' ? 'self-center' : 'self-end pb-0.5'
-                            )}
-                        >
+                        <div className="happy-message-actions-first-line flex shrink-0 items-center gap-1">
                             {hasText && (
                                 <button
                                     type="button"

@@ -22,7 +22,7 @@ import type { MarkdownTextPrimitiveProps } from '@assistant-ui/react-markdown'
 
 export const MARKDOWN_PLUGINS = [remarkGfm, remarkStripCjkAutolink, remarkMath, remarkDisableIndentedCode] satisfies NonNullable<MarkdownTextPrimitiveProps['remarkPlugins']>
 export const MARKDOWN_REHYPE_PLUGINS = [rehypeKatex] satisfies NonNullable<MarkdownTextPrimitiveProps['rehypePlugins']>
-export const MARKDOWN_CLASSNAME = 'aui-md min-w-0 max-w-full break-words text-[15px] leading-7 text-[var(--app-fg)]'
+export const MARKDOWN_CLASSNAME = 'aui-md happy-chat-text min-w-0 max-w-full break-words text-[var(--app-fg)]'
 export const MARKDOWN_COMPONENTS_BY_LANGUAGE = {
     mermaid: {
         SyntaxHighlighter: MermaidDiagram,

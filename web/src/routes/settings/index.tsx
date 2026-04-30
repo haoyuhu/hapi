@@ -3,6 +3,7 @@ import { useTranslation, type Locale } from '@/lib/use-translation'
 import { useAppGoBack } from '@/hooks/useAppGoBack'
 import { getElevenLabsSupportedLanguages, getLanguageDisplayName, type Language } from '@/lib/languages'
 import { getFontScaleOptions, useFontScale, type FontScale } from '@/hooks/useFontScale'
+import { getChatFontWeightOptions, useChatFontWeight, type ChatFontWeight } from '@/hooks/useChatFontWeight'
 import { getTerminalFontSizeOptions, useTerminalFontSize, type TerminalFontSize } from '@/hooks/useTerminalFontSize'
 import { useAppearance, getAppearanceOptions, type AppearancePreference } from '@/hooks/useTheme'
 import { PROTOCOL_VERSION } from '@hapi/protocol'
@@ -77,14 +78,17 @@ export default function SettingsPage() {
     const [isOpen, setIsOpen] = useState(false)
     const [isAppearanceOpen, setIsAppearanceOpen] = useState(false)
     const [isFontOpen, setIsFontOpen] = useState(false)
+    const [isFontWeightOpen, setIsFontWeightOpen] = useState(false)
     const [isTerminalFontOpen, setIsTerminalFontOpen] = useState(false)
     const [isVoiceOpen, setIsVoiceOpen] = useState(false)
     const containerRef = useRef<HTMLDivElement>(null)
     const appearanceContainerRef = useRef<HTMLDivElement>(null)
     const fontContainerRef = useRef<HTMLDivElement>(null)
+    const fontWeightContainerRef = useRef<HTMLDivElement>(null)
     const terminalFontContainerRef = useRef<HTMLDivElement>(null)
     const voiceContainerRef = useRef<HTMLDivElement>(null)
     const { fontScale, setFontScale } = useFontScale()
+    const { chatFontWeight, setChatFontWeight } = useChatFontWeight()
     const { terminalFontSize, setTerminalFontSize } = useTerminalFontSize()
     const { appearance, setAppearance } = useAppearance()
 
@@ -94,11 +98,13 @@ export default function SettingsPage() {
     })
 
     const fontScaleOptions = getFontScaleOptions()
+    const chatFontWeightOptions = getChatFontWeightOptions()
     const terminalFontSizeOptions = getTerminalFontSizeOptions()
     const appearanceOptions = getAppearanceOptions()
     const currentLocale = locales.find((loc) => loc.value === locale)
     const currentAppearanceLabel = appearanceOptions.find((opt) => opt.value === appearance)?.labelKey ?? 'settings.display.appearance.system'
     const currentFontScaleLabel = fontScaleOptions.find((opt) => opt.value === fontScale)?.label ?? '100%'
+    const currentChatFontWeightLabel = chatFontWeightOptions.find((opt) => opt.value === chatFontWeight)?.labelKey ?? 'settings.display.fontWeight.regular'
     const currentTerminalFontSizeLabel = terminalFontSizeOptions.find((opt) => opt.value === terminalFontSize)?.label ?? '13px'
     const currentVoiceLanguage = voiceLanguages.find((lang) => lang.code === voiceLanguage)
 
@@ -115,6 +121,11 @@ export default function SettingsPage() {
     const handleFontScaleChange = (newScale: FontScale) => {
         setFontScale(newScale)
         setIsFontOpen(false)
+    }
+
+    const handleChatFontWeightChange = (newWeight: ChatFontWeight) => {
+        setChatFontWeight(newWeight)
+        setIsFontWeightOpen(false)
     }
 
     const handleTerminalFontSizeChange = (newSize: TerminalFontSize) => {
@@ -134,7 +145,7 @@ export default function SettingsPage() {
 
     // Close dropdown when clicking outside
     useEffect(() => {
-        if (!isOpen && !isAppearanceOpen && !isFontOpen && !isTerminalFontOpen && !isVoiceOpen) return
+        if (!isOpen && !isAppearanceOpen && !isFontOpen && !isFontWeightOpen && !isTerminalFontOpen && !isVoiceOpen) return
 
         const handleClickOutside = (event: MouseEvent) => {
             if (isOpen && containerRef.current && !containerRef.current.contains(event.target as Node)) {
@@ -146,6 +157,9 @@ export default function SettingsPage() {
             if (isFontOpen && fontContainerRef.current && !fontContainerRef.current.contains(event.target as Node)) {
                 setIsFontOpen(false)
             }
+            if (isFontWeightOpen && fontWeightContainerRef.current && !fontWeightContainerRef.current.contains(event.target as Node)) {
+                setIsFontWeightOpen(false)
+            }
             if (isTerminalFontOpen && terminalFontContainerRef.current && !terminalFontContainerRef.current.contains(event.target as Node)) {
                 setIsTerminalFontOpen(false)
             }
@@ -156,17 +170,18 @@ export default function SettingsPage() {
 
         document.addEventListener('mousedown', handleClickOutside)
         return () => document.removeEventListener('mousedown', handleClickOutside)
-    }, [isOpen, isAppearanceOpen, isFontOpen, isTerminalFontOpen, isVoiceOpen])
+    }, [isOpen, isAppearanceOpen, isFontOpen, isFontWeightOpen, isTerminalFontOpen, isVoiceOpen])
 
     // Close on escape key
     useEffect(() => {
-        if (!isOpen && !isAppearanceOpen && !isFontOpen && !isTerminalFontOpen && !isVoiceOpen) return
+        if (!isOpen && !isAppearanceOpen && !isFontOpen && !isFontWeightOpen && !isTerminalFontOpen && !isVoiceOpen) return
 
         const handleEscape = (event: KeyboardEvent) => {
             if (event.key === 'Escape') {
                 setIsOpen(false)
                 setIsAppearanceOpen(false)
                 setIsFontOpen(false)
+                setIsFontWeightOpen(false)
                 setIsTerminalFontOpen(false)
                 setIsVoiceOpen(false)
             }
@@ -174,7 +189,7 @@ export default function SettingsPage() {
 
         document.addEventListener('keydown', handleEscape)
         return () => document.removeEventListener('keydown', handleEscape)
-    }, [isOpen, isAppearanceOpen, isFontOpen, isTerminalFontOpen, isVoiceOpen])
+    }, [isOpen, isAppearanceOpen, isFontOpen, isFontWeightOpen, isTerminalFontOpen, isVoiceOpen])
 
     return (
         <div className="flex h-full min-h-0 flex-col">
@@ -338,6 +353,54 @@ export default function SettingsPage() {
                                                 }`}
                                             >
                                                 <span>{opt.label}</span>
+                                                {isSelected && (
+                                                    <span className="ml-2 text-[var(--app-link)]">
+                                                        <CheckIcon />
+                                                    </span>
+                                                )}
+                                            </button>
+                                        )
+                                    })}
+                                </div>
+                            )}
+                        </div>
+                        <div ref={fontWeightContainerRef} className="relative">
+                            <button
+                                type="button"
+                                onClick={() => setIsFontWeightOpen(!isFontWeightOpen)}
+                                className="flex w-full items-center justify-between px-3 py-3 text-left transition-colors hover:bg-[var(--app-subtle-bg)]"
+                                aria-expanded={isFontWeightOpen}
+                                aria-haspopup="listbox"
+                            >
+                                <span className="text-[var(--app-fg)]">{t('settings.display.fontWeight')}</span>
+                                <span className="flex items-center gap-1 text-[var(--app-hint)]">
+                                    <span>{t(currentChatFontWeightLabel)}</span>
+                                    <ChevronDownIcon className={`transition-transform ${isFontWeightOpen ? 'rotate-180' : ''}`} />
+                                </span>
+                            </button>
+
+                            {isFontWeightOpen && (
+                                <div
+                                    className="absolute right-3 top-full mt-1 min-w-[160px] rounded-lg border border-[var(--app-border)] bg-[var(--app-bg)] shadow-lg overflow-hidden z-50"
+                                    role="listbox"
+                                    aria-label={t('settings.display.fontWeight')}
+                                >
+                                    {chatFontWeightOptions.map((opt) => {
+                                        const isSelected = chatFontWeight === opt.value
+                                        return (
+                                            <button
+                                                key={opt.value}
+                                                type="button"
+                                                role="option"
+                                                aria-selected={isSelected}
+                                                onClick={() => handleChatFontWeightChange(opt.value)}
+                                                className={`flex items-center justify-between w-full px-3 py-2 text-base text-left transition-colors ${
+                                                    isSelected
+                                                        ? 'text-[var(--app-link)] bg-[var(--app-subtle-bg)]'
+                                                        : 'text-[var(--app-fg)] hover:bg-[var(--app-subtle-bg)]'
+                                                }`}
+                                            >
+                                                <span>{t(opt.labelKey)}</span>
                                                 {isSelected && (
                                                     <span className="ml-2 text-[var(--app-link)]">
                                                         <CheckIcon />

@@ -7,7 +7,7 @@ const LEADING_DIRECTIVE_REGEX = /^([$\/][a-z0-9][\w-]*)(?=\s|$)/i
 
 export function getUserBubbleClassName(status?: MessageStatus) {
     return cn(
-        'happy-user-bubble ml-auto w-fit min-w-0 max-w-[92%] rounded-2xl bg-[var(--app-chat-user-bg)] px-4 py-2.5 text-sm text-[var(--app-chat-user-fg)] shadow-none',
+        'happy-user-bubble happy-chat-text ml-auto w-fit min-w-0 max-w-[92%] rounded-2xl bg-[var(--app-chat-user-bg)] px-4 py-2.5 text-[var(--app-chat-user-fg)] shadow-none',
         status === 'queued' && 'opacity-60'
     )
 }
@@ -47,7 +47,7 @@ export function DirectiveChip(props: { value: string }) {
     return (
         <span
             className={cn(
-                'inline-flex items-center justify-center gap-[0.2rem] whitespace-nowrap rounded-full border-0 bg-[var(--app-chat-user-chip-bg)] px-2 py-px align-middle text-[15px] font-normal leading-[1.4] text-[var(--app-chat-user-chip-fg)] shadow-none'
+                'inline-flex items-center justify-center gap-[0.2rem] whitespace-nowrap rounded-full border-0 bg-[var(--app-chat-user-chip-bg)] px-2 py-px align-middle text-[length:var(--app-chat-font-size)] font-normal leading-[1.4] text-[var(--app-chat-user-chip-fg)] shadow-none'
             )}
             title={props.value}
             aria-label={props.value}
@@ -65,7 +65,7 @@ export function UserBubbleContent(props: { text: string }) {
 
     if (shouldRenderInline) {
         return (
-            <div className="min-w-0 text-[15px] leading-7">
+            <div className="happy-chat-text min-w-0">
                 <div className="inline-flex min-w-0 flex-wrap items-center gap-x-1 gap-y-1.5 align-top">
                     {directives.map((directive) => <DirectiveChip key={directive} value={directive} />)}
                     <LazyRainbowText text={body} inline />

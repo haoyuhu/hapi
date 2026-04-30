@@ -45,4 +45,25 @@ describe('DiffView', () => {
         expect(screen.getByText('0 → 1 lines')).toBeInTheDocument()
         expect(screen.getAllByText('+1').length).toBeGreaterThan(0)
     })
+
+    it('keeps comfortable diff rows left-aligned with aligned line-number columns', () => {
+        const oldString = Array.from({ length: 123 }, (_, index) => `old ${index + 1}`).join('\n')
+        const newString = `${oldString}\nnew line`
+        const { container } = render(
+            <I18nProvider>
+                <DiffView
+                    oldString={oldString}
+                    newString={newString}
+                    variant="inline"
+                    size="comfortable"
+                />
+            </I18nProvider>
+        )
+
+        expect(container.querySelector('.leading-6')).not.toBeNull()
+        const row = container.querySelector('[style*="grid-template-columns: 3ch 3ch max-content"]')
+        expect(row).not.toBeNull()
+        expect(row?.children[0]).toHaveClass('text-left')
+        expect(row?.children[1]).toHaveClass('text-left')
+    })
 })

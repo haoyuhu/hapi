@@ -26,6 +26,15 @@ vi.mock('@/hooks/useFontScale', () => ({
     ],
 }))
 
+vi.mock('@/hooks/useChatFontWeight', () => ({
+    useChatFontWeight: () => ({ chatFontWeight: 400, setChatFontWeight: vi.fn() }),
+    getChatFontWeightOptions: () => [
+        { value: 350, labelKey: 'settings.display.fontWeight.light' },
+        { value: 400, labelKey: 'settings.display.fontWeight.regular' },
+        { value: 500, labelKey: 'settings.display.fontWeight.medium' },
+    ],
+}))
+
 vi.mock('@/hooks/useTerminalFontSize', () => ({
     useTerminalFontSize: () => ({ terminalFontSize: 13, setTerminalFontSize: vi.fn() }),
     getTerminalFontSizeOptions: () => [
@@ -142,5 +151,11 @@ describe('SettingsPage', () => {
         renderWithProviders(<SettingsPage />)
         expect(screen.getAllByText('Terminal Font Size').length).toBeGreaterThanOrEqual(1)
         expect(screen.getAllByText('13px').length).toBeGreaterThanOrEqual(1)
+    })
+
+    it('renders the Font Weight setting', () => {
+        renderWithProviders(<SettingsPage />)
+        expect(screen.getAllByText('Font Weight').length).toBeGreaterThanOrEqual(1)
+        expect(screen.getAllByText('Regular').length).toBeGreaterThanOrEqual(1)
     })
 })

@@ -120,6 +120,9 @@ function renderExitPlanModeInput(input: unknown): ReactNode | null {
 
 function renderToolInput(block: ToolCallBlock, surface: 'inline' | 'dialog' = 'inline'): ReactNode {
     const collapseLongContent = surface === 'inline'
+    const codeBlockSurfaceProps = surface === 'dialog'
+        ? { size: 'comfortable' as const, scrollY: true }
+        : {}
     const toolName = block.tool.name
     const input = block.tool.input
 
@@ -175,14 +178,14 @@ function renderToolInput(block: ToolCallBlock, surface: 'inline' | 'dialog' = 'i
                     <div className="text-xs text-[var(--app-hint)] font-mono break-all">
                         {filePath}
                     </div>
-                    <CodeBlock code={content} language="text" title="Draft" collapseLongContent={collapseLongContent} />
+                    <CodeBlock code={content} language="text" title="Draft" collapseLongContent={collapseLongContent} {...codeBlockSurfaceProps} />
                 </div>
             )
         }
     }
 
     if (toolName === 'CodexDiff' && isObject(input) && typeof input.unified_diff === 'string') {
-        return <CodeBlock code={input.unified_diff} language="diff" title="Patch" collapseLongContent={collapseLongContent} />
+        return <CodeBlock code={input.unified_diff} language="diff" title="Patch" collapseLongContent={collapseLongContent} {...codeBlockSurfaceProps} />
     }
 
     if (toolName === 'ExitPlanMode' || toolName === 'exit_plan_mode') {
@@ -196,11 +199,11 @@ function renderToolInput(block: ToolCallBlock, surface: 'inline' | 'dialog' = 'i
             ? commandArray.filter((part) => typeof part === 'string').join(' ')
             : getInputStringAny(input, ['command', 'cmd'])
         if (cmd) {
-            return <CodeBlock code={cmd} language="bash" title="Command" collapseLongContent={collapseLongContent} />
+            return <CodeBlock code={cmd} language="bash" title="Command" collapseLongContent={collapseLongContent} {...codeBlockSurfaceProps} />
         }
     }
 
-    return <CodeBlock code={safeStringify(input)} language="json" title="Input" collapseLongContent={collapseLongContent} />
+    return <CodeBlock code={safeStringify(input)} language="json" title="Input" collapseLongContent={collapseLongContent} {...codeBlockSurfaceProps} />
 }
 
 function StatusIcon(props: { state: ToolCallBlock['tool']['state'] }) {
@@ -333,7 +336,7 @@ function ToolCardInner(props: ToolCardProps) {
 
     return (
         <Card className="overflow-hidden rounded-[20px] bg-[var(--app-tool-card-bg)] shadow-none">
-            <CardHeader className="space-y-0 p-3 pb-2">
+            <CardHeader className={cn('space-y-0 p-3', subtitle ? 'pb-2' : null)}>
                 <Dialog>
                     <DialogTrigger asChild>
                         <button

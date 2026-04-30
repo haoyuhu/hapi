@@ -45,3 +45,6 @@ execplan/
 # Generated npm bundle output (local)
 cli/npm/main/
 .ace-tool/
+
+# Local Playwright CLI sessions/artifacts
+.playwright-cli/
