@@ -172,7 +172,7 @@ function RawJsonDevOnly(props: { value: unknown }) {
                 Raw JSON
             </summary>
             <div className="mt-2">
-                <CodeBlock code={safeStringify(props.value)} language="json" />
+                <CodeBlock code={safeStringify(props.value)} language="json" title="Raw JSON" />
             </div>
         </details>
     )
@@ -264,8 +264,8 @@ const BashResultView: ToolViewComponent = (props: ToolViewProps) => {
         return (
             <>
                 <div className="flex flex-col gap-2">
-                    {stdio.stdout ? <CodeBlock code={stdio.stdout} language="text" collapseLongContent={props.surface === 'inline'} /> : null}
-                    {stdio.stderr ? <CodeBlock code={stdio.stderr} language="text" collapseLongContent={props.surface === 'inline'} /> : null}
+                    {stdio.stdout ? <CodeBlock code={stdio.stdout} language="text" title="stdout" collapseLongContent={props.surface === 'inline'} /> : null}
+                    {stdio.stderr ? <CodeBlock code={stdio.stderr} language="text" title="stderr" collapseLongContent={props.surface === 'inline'} /> : null}
                 </div>
                 <RawJsonDevOnly value={result} />
             </>
@@ -415,7 +415,7 @@ const ReadResultView: ToolViewComponent = (props: ToolViewProps) => {
                         {basename(path)}
                     </div>
                 ) : null}
-                <CodeBlock code={file.content} language="text" collapseLongContent={props.surface === 'inline'} />
+                <CodeBlock code={file.content} language="text" title={path ? basename(path) : 'File content'} collapseLongContent={props.surface === 'inline'} />
                 <RawJsonDevOnly value={result} />
             </>
         )
@@ -666,7 +666,7 @@ const GenericResultView: ToolViewComponent = (props: ToolViewProps) => {
         return renderText(result, { mode: 'auto', collapseLongContent: props.surface === 'inline' })
     }
 
-    return <CodeBlock code={safeStringify(result)} language="json" collapseLongContent={props.surface === 'inline'} />
+    return <CodeBlock code={safeStringify(result)} language="json" title="JSON" collapseLongContent={props.surface === 'inline'} />
 }
 
 export const toolResultViewRegistry: Record<string, ToolViewComponent> = {

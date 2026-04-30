@@ -175,14 +175,14 @@ function renderToolInput(block: ToolCallBlock, surface: 'inline' | 'dialog' = 'i
                     <div className="text-xs text-[var(--app-hint)] font-mono break-all">
                         {filePath}
                     </div>
-                    <CodeBlock code={content} language="text" collapseLongContent={collapseLongContent} />
+                    <CodeBlock code={content} language="text" title="Draft" collapseLongContent={collapseLongContent} />
                 </div>
             )
         }
     }
 
     if (toolName === 'CodexDiff' && isObject(input) && typeof input.unified_diff === 'string') {
-        return <CodeBlock code={input.unified_diff} language="diff" collapseLongContent={collapseLongContent} />
+        return <CodeBlock code={input.unified_diff} language="diff" title="Patch" collapseLongContent={collapseLongContent} />
     }
 
     if (toolName === 'ExitPlanMode' || toolName === 'exit_plan_mode') {
@@ -196,11 +196,11 @@ function renderToolInput(block: ToolCallBlock, surface: 'inline' | 'dialog' = 'i
             ? commandArray.filter((part) => typeof part === 'string').join(' ')
             : getInputStringAny(input, ['command', 'cmd'])
         if (cmd) {
-            return <CodeBlock code={cmd} language="bash" collapseLongContent={collapseLongContent} />
+            return <CodeBlock code={cmd} language="bash" title="Command" collapseLongContent={collapseLongContent} />
         }
     }
 
-    return <CodeBlock code={safeStringify(input)} language="json" collapseLongContent={collapseLongContent} />
+    return <CodeBlock code={safeStringify(input)} language="json" title="Input" collapseLongContent={collapseLongContent} />
 }
 
 function StatusIcon(props: { state: ToolCallBlock['tool']['state'] }) {
@@ -304,15 +304,15 @@ function ToolCardInner(props: ToolCardProps) {
         <div className="flex flex-col gap-1">
             <div className="flex items-center justify-between gap-3">
                 <div className="min-w-0 flex items-center gap-2">
-                    <div className="shrink-0 flex h-3.5 w-3.5 items-center justify-center text-[var(--app-hint)] leading-none">
+                    <div className="shrink-0 flex h-3.5 w-3.5 items-center justify-center text-[var(--app-tool-card-accent)] leading-none">
                         {presentation.icon}
                     </div>
-                    <CardTitle className="min-w-0 text-sm font-medium leading-tight break-words">
+                    <CardTitle className="min-w-0 text-sm font-medium leading-tight break-words text-[var(--app-fg)]">
                         {toolTitle}
                     </CardTitle>
                 </div>
 
-                <div className="flex items-center gap-2 shrink-0">
+                <div className="flex items-center gap-2 shrink-0 text-[var(--app-hint)]">
                     <ElapsedView from={runningFrom} active={props.block.tool.state === 'running'} />
                     <span className={stateColor}>
                         <StatusIcon state={props.block.tool.state} />
@@ -324,7 +324,7 @@ function ToolCardInner(props: ToolCardProps) {
             </div>
 
             {subtitle ? (
-                <CardDescription className="font-mono text-xs break-all opacity-80">
+                <CardDescription className="font-mono text-xs break-all text-[var(--app-tool-card-subtitle)]">
                     {truncate(subtitle, 160)}
                 </CardDescription>
             ) : null}
@@ -332,8 +332,8 @@ function ToolCardInner(props: ToolCardProps) {
     )
 
     return (
-        <Card className="overflow-hidden shadow-sm">
-            <CardHeader className="p-3 space-y-0">
+        <Card className="overflow-hidden rounded-[20px] bg-[var(--app-tool-card-bg)] shadow-none">
+            <CardHeader className="space-y-0 p-3 pb-2">
                 <Dialog>
                     <DialogTrigger asChild>
                         <button
@@ -385,7 +385,7 @@ function ToolCardInner(props: ToolCardProps) {
             </CardHeader>
 
             {hasBody ? (
-                <CardContent className="px-3 pb-3 pt-0">
+                <CardContent className="px-3 pb-3 pt-1">
                     {taskSummary ? (
                         <div className="mt-2">
                             {taskSummary}
