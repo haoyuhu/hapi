@@ -304,8 +304,8 @@ function ToolCardInner(props: ToolCardProps) {
     const { suppressFocusRing, onTriggerPointerDown, onTriggerKeyDown, onTriggerBlur } = usePointerFocusRing()
 
     const header = (
-        <div className="flex flex-col gap-1">
-            <div className="flex items-center justify-between gap-3">
+        <div className="flex items-center justify-between gap-3">
+            <div className="min-w-0 flex flex-col gap-1">
                 <div className="min-w-0 flex items-center gap-2">
                     <div className="shrink-0 flex h-3.5 w-3.5 items-center justify-center text-[var(--app-tool-card-accent)] leading-none">
                         {presentation.icon}
@@ -315,22 +315,25 @@ function ToolCardInner(props: ToolCardProps) {
                     </CardTitle>
                 </div>
 
-                <div className="flex items-center gap-2 shrink-0 text-[var(--app-hint)]">
-                    <ElapsedView from={runningFrom} active={props.block.tool.state === 'running'} />
-                    <span className={stateColor}>
-                        <StatusIcon state={props.block.tool.state} />
-                    </span>
-                    <span className="text-[var(--app-hint)]">
-                        <DetailsIcon />
-                    </span>
-                </div>
+                {subtitle ? (
+                    <CardDescription className="font-mono text-xs break-all text-[var(--app-tool-card-subtitle)]">
+                        {truncate(subtitle, 160)}
+                    </CardDescription>
+                ) : null}
             </div>
 
-            {subtitle ? (
-                <CardDescription className="font-mono text-xs break-all text-[var(--app-tool-card-subtitle)]">
-                    {truncate(subtitle, 160)}
-                </CardDescription>
-            ) : null}
+            <div className={cn(
+                'flex shrink-0 items-center gap-2 self-center text-[var(--app-hint)]',
+                subtitle ? '-translate-y-0.5' : null
+            )}>
+                <ElapsedView from={runningFrom} active={props.block.tool.state === 'running'} />
+                <span className={stateColor}>
+                    <StatusIcon state={props.block.tool.state} />
+                </span>
+                <span className="text-[var(--app-hint)]">
+                    <DetailsIcon />
+                </span>
+            </div>
         </div>
     )
 
