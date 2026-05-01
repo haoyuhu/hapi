@@ -27,6 +27,8 @@ type PendingScrollRestore = {
 const MESSAGE_ANCHOR_SELECTOR = '.happy-thread-messages > [id]'
 const AUTO_SCROLL_RESUME_THRESHOLD_PX = 120
 const MANUAL_SCROLL_EPSILON_PX = 1
+const INITIAL_SCROLL_SETTLE_MS = 1800
+const INITIAL_SCROLL_SETTLE_DELAYS_MS = [0, 16, 50, 120, 250, 500, 900, 1400, 1800] as const
 
 type ScrollIntent = {
     distanceFromBottom: number
@@ -239,6 +241,7 @@ export function HappyThread(props: {
 }) {
     const { t } = useTranslation()
     const viewportRef = useRef<HTMLDivElement | null>(null)
+    const contentRef = useRef<HTMLDivElement | null>(null)
     const topSentinelRef = useRef<HTMLDivElement | null>(null)
     const loadLockRef = useRef(false)
     const pendingScrollRef = useRef<PendingScrollRestore | null>(null)
@@ -254,6 +257,9 @@ export function HappyThread(props: {
     const onFlushPendingRef = useRef(props.onFlushPending)
     const forceScrollTokenRef = useRef(props.forceScrollToken)
     const lastScrollTopRef = useRef(0)
+    const initialScrollSessionRef = useRef<string | null>(null)
+    const initialScrollDeadlineRef = useRef(0)
+    const initialScrollTimersRef = useRef<number[]>([])
 
     // Smart scroll state: enabled only while the user is intentionally at the bottom.
     const autoScrollEnabledRef = useRef(true)
@@ -272,6 +278,17 @@ export function HappyThread(props: {
     useEffect(() => {
         onLoadMoreRef.current = props.onLoadMore
     }, [props.onLoadMore])
+
+    const isInitialScrollSettling = useCallback(() => {
+        return initialScrollSessionRef.current === props.sessionId && Date.now() < initialScrollDeadlineRef.current
+    }, [props.sessionId])
+
+    const clearInitialScrollTimers = useCallback(() => {
+        for (const timer of initialScrollTimersRef.current) {
+            window.clearTimeout(timer)
+        }
+        initialScrollTimersRef.current = []
+    }, [])
 
     // Track scroll position to toggle autoScroll (stable listener using refs)
     useEffect(() => {
@@ -307,6 +324,10 @@ export function HappyThread(props: {
             })
             lastScrollTopRef.current = viewport.scrollTop
 
+            if (isInitialScrollSettling()) {
+                return
+            }
+
             if (intent.isScrollingUp && intent.distanceFromBottom > MANUAL_SCROLL_EPSILON_PX) {
                 setAutoScrollMode(false)
                 setAtBottomMode(false)
@@ -327,12 +348,20 @@ export function HappyThread(props: {
         return () => viewport.removeEventListener('scroll', handleScroll)
     }, []) // Stable: no dependencies, reads from refs
 
+    const scrollToBottomInstant = useCallback(() => {
+        const viewport = viewportRef.current
+        if (viewport) {
+            viewport.scrollTo({ top: viewport.scrollHeight, behavior: 'instant' })
+            lastScrollTopRef.current = viewport.scrollTop
+        }
+    }, [])
+
     // Scroll to bottom handler for the indicator button
     const scrollToBottom = useCallback(() => {
         const viewport = viewportRef.current
         if (viewport) {
             viewport.scrollTo({ top: viewport.scrollHeight, behavior: 'smooth' })
-            lastScrollTopRef.current = viewport.scrollHeight
+            lastScrollTopRef.current = viewport.scrollTop
         }
         autoScrollEnabledRef.current = true
         if (!atBottomRef.current) {
@@ -343,13 +372,59 @@ export function HappyThread(props: {
     }, [])
 
     // Reset state when session changes
-    useEffect(() => {
+    useLayoutEffect(() => {
         autoScrollEnabledRef.current = true
         lastScrollTopRef.current = viewportRef.current?.scrollTop ?? 0
         atBottomRef.current = true
         onAtBottomChangeRef.current(true)
         forceScrollTokenRef.current = props.forceScrollToken
-    }, [props.sessionId])
+        initialScrollSessionRef.current = null
+        initialScrollDeadlineRef.current = 0
+        clearInitialScrollTimers()
+    }, [props.sessionId, clearInitialScrollTimers])
+
+    useLayoutEffect(() => {
+        if (
+            initialScrollSessionRef.current === props.sessionId
+            || props.isLoadingMessages
+            || props.rawMessagesCount === 0
+            || pendingScrollRef.current
+        ) {
+            return
+        }
+
+        initialScrollSessionRef.current = props.sessionId
+        autoScrollEnabledRef.current = true
+        atBottomRef.current = true
+        onAtBottomChangeRef.current(true)
+        scrollToBottomInstant()
+
+        initialScrollDeadlineRef.current = Date.now() + INITIAL_SCROLL_SETTLE_MS
+        clearInitialScrollTimers()
+        initialScrollTimersRef.current = INITIAL_SCROLL_SETTLE_DELAYS_MS.map((delay) => window.setTimeout(() => {
+            if (
+                initialScrollSessionRef.current !== props.sessionId
+                || !autoScrollEnabledRef.current
+                || pendingScrollRef.current
+            ) {
+                return
+            }
+            scrollToBottomInstant()
+        }, delay))
+    }, [
+        props.sessionId,
+        props.isLoadingMessages,
+        props.rawMessagesCount,
+        props.messagesVersion,
+        scrollToBottomInstant,
+        clearInitialScrollTimers
+    ])
+
+    useEffect(() => {
+        return () => {
+            clearInitialScrollTimers()
+        }
+    }, [clearInitialScrollTimers])
 
     useEffect(() => {
         if (forceScrollTokenRef.current === props.forceScrollToken) {
@@ -360,7 +435,13 @@ export function HappyThread(props: {
     }, [props.forceScrollToken, scrollToBottom])
 
     const handleLoadMore = useCallback(() => {
-        if (isLoadingMessagesRef.current || !hasMoreMessagesRef.current || isLoadingMoreRef.current || loadLockRef.current) {
+        if (
+            isInitialScrollSettling()
+            || isLoadingMessagesRef.current
+            || !hasMoreMessagesRef.current
+            || isLoadingMoreRef.current
+            || loadLockRef.current
+        ) {
             return
         }
         const viewport = viewportRef.current
@@ -393,7 +474,7 @@ export function HappyThread(props: {
                 loadLockRef.current = false
             }
         })
-    }, [])
+    }, [isInitialScrollSettling])
 
     const handleOutlineSelect = useCallback((item: ConversationOutlineItem) => {
         const target = document.getElementById(getConversationMessageAnchorId(item.targetMessageId))
@@ -423,6 +504,9 @@ export function HappyThread(props: {
             (entries) => {
                 for (const entry of entries) {
                     if (entry.isIntersecting) {
+                        if (isInitialScrollSettling()) {
+                            continue
+                        }
                         handleLoadMoreRef.current()
                     }
                 }
@@ -435,7 +519,22 @@ export function HappyThread(props: {
 
         observer.observe(sentinel)
         return () => observer.disconnect()
-    }, [props.hasMoreMessages, props.isLoadingMessages])
+    }, [props.hasMoreMessages, props.isLoadingMessages, isInitialScrollSettling])
+
+    useEffect(() => {
+        const content = contentRef.current
+        if (!content || typeof ResizeObserver === 'undefined') {
+            return
+        }
+
+        const observer = new ResizeObserver(() => {
+            if (isInitialScrollSettling() && autoScrollEnabledRef.current && !pendingScrollRef.current) {
+                scrollToBottomInstant()
+            }
+        })
+        observer.observe(content)
+        return () => observer.disconnect()
+    }, [isInitialScrollSettling, scrollToBottomInstant])
 
     useLayoutEffect(() => {
         const pending = pendingScrollRef.current
@@ -455,10 +554,9 @@ export function HappyThread(props: {
             return
         }
         if (atBottomRef.current && autoScrollEnabledRef.current) {
-            viewport.scrollTo({ top: viewport.scrollHeight, behavior: 'instant' })
-            lastScrollTopRef.current = viewport.scrollTop
+            scrollToBottomInstant()
         }
-    }, [props.messagesVersion])
+    }, [props.messagesVersion, scrollToBottomInstant])
 
     useEffect(() => {
         isLoadingMoreRef.current = props.isLoadingMoreMessages
@@ -492,7 +590,7 @@ export function HappyThread(props: {
                     scrollToBottomOnThreadSwitch={false}
                 >
                     <div ref={viewportRef} className="app-scroll-y min-h-0 flex-1 overflow-x-hidden">
-                        <div className="mx-auto w-full max-w-content min-w-0 p-3">
+                        <div ref={contentRef} className="mx-auto w-full max-w-content min-w-0 p-3">
                             <div ref={topSentinelRef} className="h-px w-full" aria-hidden="true" />
                             {showSkeleton ? (
                                 <MessageSkeleton />
