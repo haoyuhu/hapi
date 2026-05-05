@@ -2,7 +2,13 @@ import { describe, expect, it, vi } from 'vitest'
 import { fireEvent, render, screen } from '@testing-library/react'
 import type { ComponentProps } from 'react'
 import { I18nProvider } from '@/lib/i18n-context'
-import { ConversationOutlinePanel, captureScrollAnchor, getScrollIntent, restoreScrollAnchor } from '@/components/AssistantChat/HappyThread'
+import {
+    ConversationOutlinePanel,
+    captureScrollAnchor,
+    getScrollIntent,
+    restoreScrollAnchor,
+    shouldCancelInitialScrollSettling,
+} from '@/components/AssistantChat/HappyThread'
 import type { ConversationOutlineItem } from '@/chat/outline'
 
 const outlineItems: ConversationOutlineItem[] = [
@@ -128,6 +134,36 @@ describe('scroll anchor helpers', () => {
             isNearBottom: true,
             isScrollingUp: false
         })
+    })
+
+    it('cancels initial scroll settling when the user scrolls up away from the bottom', () => {
+        const intent = getScrollIntent({
+            scrollTop: 520,
+            previousScrollTop: 700,
+            scrollHeight: 1232,
+            clientHeight: 530
+        })
+
+        expect(intent).toMatchObject({
+            distanceFromBottom: 182,
+            isScrollingUp: true
+        })
+        expect(shouldCancelInitialScrollSettling(intent)).toBe(true)
+    })
+
+    it('keeps initial scroll settling for negligible movement at the bottom', () => {
+        const intent = getScrollIntent({
+            scrollTop: 702,
+            previousScrollTop: 702,
+            scrollHeight: 1232,
+            clientHeight: 530
+        })
+
+        expect(intent).toMatchObject({
+            distanceFromBottom: 0,
+            isScrollingUp: false
+        })
+        expect(shouldCancelInitialScrollSettling(intent)).toBe(false)
     })
 
     it('restores the captured message to the same viewport offset', () => {

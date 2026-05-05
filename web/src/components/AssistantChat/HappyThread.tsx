@@ -52,6 +52,10 @@ export function getScrollIntent(params: {
     }
 }
 
+export function shouldCancelInitialScrollSettling(intent: ScrollIntent): boolean {
+    return intent.isScrollingUp && intent.distanceFromBottom > MANUAL_SCROLL_EPSILON_PX
+}
+
 export function captureScrollAnchor(viewport: HTMLElement): ScrollAnchor | null {
     const viewportRect = viewport.getBoundingClientRect()
     const messages = Array.from(viewport.querySelectorAll<HTMLElement>(MESSAGE_ANCHOR_SELECTOR))
@@ -257,6 +261,7 @@ export function HappyThread(props: {
     const onFlushPendingRef = useRef(props.onFlushPending)
     const forceScrollTokenRef = useRef(props.forceScrollToken)
     const lastScrollTopRef = useRef(0)
+    const sessionIdRef = useRef(props.sessionId)
     const initialScrollSessionRef = useRef<string | null>(null)
     const initialScrollDeadlineRef = useRef(0)
     const initialScrollTimersRef = useRef<number[]>([])
@@ -279,9 +284,13 @@ export function HappyThread(props: {
         onLoadMoreRef.current = props.onLoadMore
     }, [props.onLoadMore])
 
-    const isInitialScrollSettling = useCallback(() => {
-        return initialScrollSessionRef.current === props.sessionId && Date.now() < initialScrollDeadlineRef.current
+    useEffect(() => {
+        sessionIdRef.current = props.sessionId
     }, [props.sessionId])
+
+    const isInitialScrollSettling = useCallback(() => {
+        return initialScrollSessionRef.current === sessionIdRef.current && Date.now() < initialScrollDeadlineRef.current
+    }, [])
 
     const clearInitialScrollTimers = useCallback(() => {
         for (const timer of initialScrollTimersRef.current) {
@@ -325,6 +334,12 @@ export function HappyThread(props: {
             lastScrollTopRef.current = viewport.scrollTop
 
             if (isInitialScrollSettling()) {
+                if (shouldCancelInitialScrollSettling(intent)) {
+                    initialScrollDeadlineRef.current = 0
+                    clearInitialScrollTimers()
+                    setAutoScrollMode(false)
+                    setAtBottomMode(false)
+                }
                 return
             }
 
