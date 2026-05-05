@@ -26,10 +26,6 @@ npm-debug.log*
 # Coverage
 coverage/
 
-# Browser test artifacts
-web/test-results/
-web/playwright-report/
-
 # OS / IDE
 **/.DS_Store
 .idea/
@@ -45,6 +41,3 @@ execplan/
 # Generated npm bundle output (local)
 cli/npm/main/
 .ace-tool/
-
-# Local Playwright CLI sessions/artifacts
-.playwright-cli/

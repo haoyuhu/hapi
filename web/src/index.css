@@ -76,7 +76,6 @@
     --app-font-scale: 1;
     --app-chat-font-size: 0.9375rem;
     --app-chat-line-height: 1.75rem;
-    --app-chat-font-weight: 400;
     --app-message-action-size: 1.125rem;
 }
 
@@ -323,13 +322,11 @@ body {
 .aui-md {
     color: var(--app-fg);
     font-size: var(--app-chat-font-size);
-    font-weight: var(--app-chat-font-weight);
     line-height: var(--app-chat-line-height);
 }
 
 .happy-chat-text {
     font-size: var(--app-chat-font-size);
-    font-weight: var(--app-chat-font-weight);
     line-height: var(--app-chat-line-height);
 }
 
